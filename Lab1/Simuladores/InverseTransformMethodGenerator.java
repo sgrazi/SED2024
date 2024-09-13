@@ -1,3 +1,5 @@
+package Simuladores;
+
 import java.util.Random;
 
 // Para una variable aleatoria continua exponencial negativa

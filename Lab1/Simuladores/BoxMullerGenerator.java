@@ -1,3 +1,5 @@
+package Simuladores;
+
 import java.util.Random;
 
 // Para obtener muestras de una distribucion normal
@@ -10,6 +12,12 @@ public class BoxMullerGenerator {
         this.sigma = sigma;
         this.mu = mu;
         this.random = new Random(seed);
+    }
+
+    public BoxMullerGenerator(double sigma, double mu) {
+        this.sigma = sigma;
+        this.mu = mu;
+        this.random = new Random();
     }
 
     public BoxMullerGenerator() {
