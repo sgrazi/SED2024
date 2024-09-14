@@ -2,7 +2,7 @@ package Histogramas;
 
 // Registro de observaciones ponderadas
 
-class HistogramWeighted {
+public class HistogramWeighted {
 	private double accumObs;
 	private double totTime;
 	private double lastTim;

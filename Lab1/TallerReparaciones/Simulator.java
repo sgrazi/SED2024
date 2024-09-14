@@ -5,6 +5,8 @@ package TallerReparaciones;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+
+import Histogramas.HistogramWeighted;
 import Simuladores.*;
 
 class Simulator {
@@ -15,14 +17,19 @@ class Simulator {
 
 	// Atributos del modelo
 	double tiempoEntreRoturas;
-	int cantMaquinas, cantMecanicos, cantEquipamiento, dispMecanicos, dispEquipamiento;
+	int cantMaquinas, cantMecanicos, cantEquipamiento, dispMecanicos, dispEquipamiento, cantEquipamientoRoto;
 	boolean enOperacion;
 	Queue<Entity> q1, q2;
 
 	// Generadores de numeros aleatorios
-	InverseTransformMethodGenerator GeneradorTiemposEntreRoturas;
-	BoxMullerGenerator GeneradorTiemposDesarmado;
-	BoxMullerGenerator GeneradorTiemposReparado;
+	InverseTransformMethodGenerator generadorTiemposEntreRoturas;
+	BoxMullerGenerator generadorTiemposDesarmado;
+	BoxMullerGenerator generadorTiemposReparado;
+
+	// Histogramas
+	private HistogramWeighted mecanicosUtilizados;
+	private HistogramWeighted equipamientoUtilizado;
+	private HistogramWeighted equipamientoRoto;
 
 	// Listas para almacenar los valores generados
 	private List<Double> tiemposEntreRoturas = new LinkedList<Double>();
@@ -36,10 +43,15 @@ class Simulator {
 		this.tiempoEntreRoturas = tiempoEntreRoturas;
 		this.cantMecanicos = cantMecanicos;
 		this.cantEquipamiento = cantEquipamiento;
+		this.cantEquipamientoRoto = 0;
 
-		this.GeneradorTiemposEntreRoturas = new InverseTransformMethodGenerator(tiempoEntreRoturas);
-		this.GeneradorTiemposDesarmado = new BoxMullerGenerator(1,5);
-		this.GeneradorTiemposReparado = new BoxMullerGenerator(2,8);
+		this.generadorTiemposEntreRoturas = new InverseTransformMethodGenerator(tiempoEntreRoturas);
+		this.generadorTiemposDesarmado = new BoxMullerGenerator(1,5);
+		this.generadorTiemposReparado = new BoxMullerGenerator(2,8);
+
+		this.mecanicosUtilizados = new HistogramWeighted();
+		this.equipamientoUtilizado = new HistogramWeighted();
+		this.equipamientoRoto = new HistogramWeighted();
 	}
 
 	public double getTim() {
@@ -97,7 +109,7 @@ class Simulator {
 		
 		// Agenda primera rotura para todas las máquinas
 		for (int i=1; i<=cantMaquinas; i++) {
-			double tiempo = GeneradorTiemposEntreRoturas.generate();
+			double tiempo = generadorTiemposEntreRoturas.generate();
 			tiemposEntreRoturas.add(Math.floor(tiempo));
 			cause(1, new Entity(i), Math.floor(tiempo));
 		}
@@ -139,6 +151,7 @@ class Simulator {
 				imprimirCalendario();
 			}
 
+
 			// Fase C: ejecucion de eventos C (si se cumplen sus respectivas condiciones)
 			C1();
 			imprimirCalendario();
@@ -147,15 +160,21 @@ class Simulator {
 			// Agregar tantos Ci como eventos condicionados tenga el modelo
 			// Ci();
 			// imprimirCalendario();
+
+			equipamientoUtilizado.log(tim, cantEquipamiento - dispEquipamiento);
+			mecanicosUtilizados.log(tim, cantMecanicos - dispMecanicos);
+			equipamientoRoto.log(tim, cantEquipamientoRoto);
 		}
 
-		imprimirValoresGenerados();
+		// imprimirValoresGenerados();
+		imprimirHistogramas();
 	}
 	
 	// Operaciones del modelo
 	private void B1 () { 
 		if (enOperacion) {
 			// Final de funcionamiento (rotura)
+			cantEquipamientoRoto++;
 			System.out.println("Se rompe la máquina " + current.getId() + " a la hora " + tim);
 			q1.add(current); // Se agrega la entidad actual a la cola de espera q1 (por un mecánico)
 		}
@@ -174,8 +193,9 @@ class Simulator {
 		// Devuelve mecánico y equipamiento
 		dispMecanicos++;
 		dispEquipamiento++;
+		cantEquipamientoRoto--;
 		if (enOperacion) {
-			double tiempo = GeneradorTiemposEntreRoturas.generate();
+			double tiempo = generadorTiemposEntreRoturas.generate();
 			tiemposEntreRoturas.add(Math.floor(tiempo));
 			cause(1, current, Math.floor(tiempo)); // Se agenda la próxima rotura para la máquina current
 		}
@@ -186,7 +206,7 @@ class Simulator {
 		while (dispMecanicos > 0 && !q1.isEmpty()) {
 			System.out.println("Comienza desarmado de máquina " + q1.peek().getId() + " a la hora " + tim);
 			dispMecanicos--; // Se toma una unidad del recurso mecánicos
-			double[] tiempoDesarmado = GeneradorTiemposDesarmado.generate();
+			double[] tiempoDesarmado = generadorTiemposDesarmado.generate();
 			tiemposDesarmado.add(Math.floor(tiempoDesarmado[0]));
 			cause(2, q1.remove(), Math.floor(tiempoDesarmado[0])); // Se agenda el final del desarmado de la máquina que estaba en q1
 		}
@@ -197,7 +217,7 @@ class Simulator {
 		while (dispEquipamiento > 0 && !q2.isEmpty()) {
 			System.out.println("Comienza reparación de máquina " + q2.peek().getId() + " a la hora " + tim);
 			dispEquipamiento--; // Se toma una unidad del recurso equipamiento
-			double[] tiempoReparado = GeneradorTiemposReparado.generate();
+			double[] tiempoReparado = generadorTiemposReparado.generate();
 			tiemposReparado.add(Math.floor(tiempoReparado[0]));
 			cause(3, q2.remove(), Math.floor(tiempoReparado[0])); // Se agenda el final de la reparación de la máquina que estaba en q2
 		}
@@ -208,5 +228,11 @@ class Simulator {
 		System.out.println("Tiempos entre roturas: " + tiemposEntreRoturas);
 		System.out.println("Tiempos de desarmado: " + tiemposDesarmado);
 		System.out.println("Tiempos de reparado: " + tiemposReparado);
+	}
+
+	private void imprimirHistogramas() {
+		System.out.println("Cantidad promedio de mecanicos utilizados: " + mecanicosUtilizados.getMean());
+		System.out.println("Cantidad promedio de equipamiento utilizado: " + equipamientoUtilizado.getMean());
+		System.out.println("Cantidad promedio de equipamiento roto: " + equipamientoRoto.getMean());
 	}
 }
