@@ -17,7 +17,7 @@ class Simulator {
 
 	// Atributos del modelo
 	double tiempoEntreRoturas;
-	int cantMaquinas, cantMecanicos, cantEquipamiento, dispMecanicos, dispEquipamiento, cantEquipamientoRoto;
+	int cantMaquinas, cantMecanicos, cantEquipamiento, dispMecanicos, dispEquipamiento, cantMaquinasRotas;
 	boolean enOperacion;
 	Queue<Entity> q1, q2;
 
@@ -43,9 +43,9 @@ class Simulator {
 		this.tiempoEntreRoturas = tiempoEntreRoturas;
 		this.cantMecanicos = cantMecanicos;
 		this.cantEquipamiento = cantEquipamiento;
-		this.cantEquipamientoRoto = 0;
+		this.cantMaquinasRotas = 0;
 
-		this.generadorTiemposEntreRoturas = new InverseTransformMethodGenerator(tiempoEntreRoturas);
+		this.generadorTiemposEntreRoturas = new InverseTransformMethodGenerator(1/tiempoEntreRoturas);
 		this.generadorTiemposDesarmado = new BoxMullerGenerator(1,5);
 		this.generadorTiemposReparado = new BoxMullerGenerator(2,8);
 
@@ -163,7 +163,7 @@ class Simulator {
 
 			equipamientoUtilizado.log(tim, cantEquipamiento - dispEquipamiento);
 			mecanicosUtilizados.log(tim, cantMecanicos - dispMecanicos);
-			equipamientoRoto.log(tim, cantEquipamientoRoto);
+			equipamientoRoto.log(tim, cantMaquinasRotas);
 		}
 
 		// imprimirValoresGenerados();
@@ -174,7 +174,7 @@ class Simulator {
 	private void B1 () { 
 		if (enOperacion) {
 			// Final de funcionamiento (rotura)
-			cantEquipamientoRoto++;
+			cantMaquinasRotas++;
 			System.out.println("Se rompe la máquina " + current.getId() + " a la hora " + tim);
 			q1.add(current); // Se agrega la entidad actual a la cola de espera q1 (por un mecánico)
 		}
@@ -193,7 +193,7 @@ class Simulator {
 		// Devuelve mecánico y equipamiento
 		dispMecanicos++;
 		dispEquipamiento++;
-		cantEquipamientoRoto--;
+		cantMaquinasRotas--;
 		if (enOperacion) {
 			double tiempo = generadorTiemposEntreRoturas.generate();
 			tiemposEntreRoturas.add(Math.floor(tiempo));
