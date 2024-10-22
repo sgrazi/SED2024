@@ -2,7 +2,7 @@ package Histogramas;
 
 // Registro de tendencias de observaciones
 
-class HistogramTendency {
+public class HistogramTendency {
 	private double [] times;
 	private double [] values;
 	private int top;

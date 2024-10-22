@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Queue;
 
 import Histogramas.HistogramWeighted;
+import Histogramas.HistogramTendency;
 import Simuladores.*;
 
 class Simulator {
@@ -30,6 +31,8 @@ class Simulator {
 	private HistogramWeighted mecanicosUtilizados;
 	private HistogramWeighted equipamientoUtilizado;
 	private HistogramWeighted equipamientoRoto;
+	private HistogramTendency tendenciaColaMecanicos;
+	private HistogramTendency tendenciaColaEquipamiento;
 
 	// Listas para almacenar los valores generados
 	private List<Double> tiemposEntreRoturas = new LinkedList<Double>();
@@ -55,6 +58,9 @@ class Simulator {
 		this.mecanicosUtilizados = new HistogramWeighted();
 		this.equipamientoUtilizado = new HistogramWeighted();
 		this.equipamientoRoto = new HistogramWeighted();
+		this.tendenciaColaMecanicos = new HistogramTendency(1000);
+		this.tendenciaColaEquipamiento = new HistogramTendency(1000);
+
 	}
 
 	public double getTim() {
@@ -167,14 +173,17 @@ class Simulator {
 			// Ci();
 			// imprimirCalendario();
 
+			tendenciaColaMecanicos.log(tim, q1.size());
+			tendenciaColaEquipamiento.log(tim, q2.size());
 			equipamientoUtilizado.log(tim, cantEquipamiento - dispEquipamiento);
 			mecanicosUtilizados.log(tim, cantMecanicos - dispMecanicos);
 			equipamientoRoto.log(tim, cantMaquinasRotas);
 		}
 
 		// imprimirValoresGenerados();
-		//imprimirHistogramas();
-		imprimirTiemposEspera();
+		// imprimirHistogramas();
+		//imprimirHistogramasTendencia();
+		//imprimirTiemposEspera();
 
 		means[0] = mecanicosUtilizados.getMean();
 		means[1] = equipamientoUtilizado.getMean();
@@ -253,6 +262,14 @@ class Simulator {
 		System.out.println("Cantidad promedio de equipamiento utilizado: " + equipamientoUtilizado.getMean());
 		System.out.println("Cantidad promedio de equipamiento roto: " + equipamientoRoto.getMean());
 	}
+
+	private void imprimirHistogramasTendencia() {
+		System.out.println("Tendencia cola mecanicos:");
+		tendenciaColaMecanicos.print();
+		System.out.println("Tendencia cola equipamiento:");
+		tendenciaColaEquipamiento.print();
+	}
+
 
 	private void imprimirTiemposEspera() {
 		double aux = 0;

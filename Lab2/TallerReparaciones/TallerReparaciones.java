@@ -21,26 +21,28 @@ class TallerReparaciones {
 
 			// Se ejecuta la simulación durante 8 horas de trabajo
 			double[] a = sim.run(8 * 60);
-			System.out.println("Fin de jornada a la hora " + sim.getTim());
+			means[n*3] = a[0];
+			means[n*3 + 1] = a[1];
+			means[n*3 + 2] = a[2];
+//			System.out.println("Fin de jornada a la hora " + sim.getTim());
 
 			// Se cierra la operación
 			sim.enOperacion = false;
 
 			// Se continúa por un tiempo arbitrariamente alto para finalizar la reparación de las máquinas rotas
 			double[] m = sim.run(10000);
-			means[n*3] = m[0];
-			means[n*3 + 1] = m[1];
-			means[n*3 + 2] = m[2];
-			System.out.println("Fin de reparaciones a la hora " + sim.getTim());
+//			System.out.println("Fin de reparaciones a la hora " + sim.getTim());
+			System.out.println("Horas extra: " + (sim.getTim() - 480.0));
 		}
 
-		System.out.println("Medias de las " + N + " ejecuciones");
-		for (int i = 0 ; i < 3; i++) {
-			System.out.print("[");
-			for (int j = 0 ; j < N; j++) {
-				System.out.print(means[(j*3)+i] + ", ");
-			}
-			System.out.println("]");
-		}
+		// Imprimir medias
+//		System.out.println("Medias de las " + N + " ejecuciones");
+//		for (int i = 0 ; i < 3; i++) {
+//			System.out.print("[");
+//			for (int j = 0 ; j < N; j++) {
+//				System.out.print(means[(j*3)+i] + ", ");
+//			}
+//			System.out.println("]");
+//		}
     }
 }
